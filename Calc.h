@@ -54,6 +54,18 @@ __published:	// IDE-managed Components
 	void __fastcall ParenClick2(TObject *Sender);
 	void __fastcall AddClick(TObject *Sender);
 	void __fastcall SubClick(TObject *Sender);
+	void __fastcall MulClick(TObject *Sender);
+	void __fastcall DivClick(TObject *Sender);
+	void __fastcall DotClick(TObject *Sender);
+	void __fastcall NegClick(TObject *Sender);
+	void __fastcall PowClick(TObject *Sender);
+	void __fastcall ClearClick(TObject *Sender);
+	void __fastcall SinClick(TObject *Sender);
+	void __fastcall CosClick(TObject *Sender);
+	void __fastcall TanClick(TObject *Sender);
+	void __fastcall CotClick(TObject *Sender);
+	void __fastcall LnClick(TObject *Sender);
+	void __fastcall LogClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TForm1(TComponent* Owner);
