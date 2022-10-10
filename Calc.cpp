@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #include <vcl.h>
 #pragma hdrstop
@@ -12,6 +12,7 @@ char lastChar = '0';
 int pCount = 0;
 bool fMode = false;
 bool dMode = false;
+bool d2Mode = true;
 bool nMode = false;
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
@@ -36,7 +37,7 @@ void __fastcall TForm1::NumberClick(TObject *Sender)
 		nMode = false;
 	}
 
-	if(fMode == false) {
+	if(d2Mode == true) {
 		dMode = true;
     }
 
@@ -65,6 +66,7 @@ void __fastcall TForm1::ParenClick1(TObject *Sender)
 		lastChar = '(';
 		pCount++;
 		dMode = false;
+		d2Mode = true;
     }
 
 }
@@ -97,6 +99,7 @@ void __fastcall TForm1::AddClick(TObject *Sender)
 		lastChar = '+';
 		fMode = false;
 		dMode = false;
+		d2Mode = true;
 	}
 }
 //---------------------------------------------------------------------------
@@ -105,10 +108,11 @@ void __fastcall TForm1::SubClick(TObject *Sender)
 {
 	if(fMode == true) {
 		TButton* b = ((TButton*)Sender);
-		EditDisplay->Text = EditDisplay->Text + L"─";
+		EditDisplay->Text = EditDisplay->Text + '-';
 		lastChar = '-';
 		fMode = false;
 		dMode = false;
+		d2Mode = true;
 	}
 }
 //---------------------------------------------------------------------------
@@ -121,6 +125,7 @@ void __fastcall TForm1::MulClick(TObject *Sender)
 		lastChar = '*';
 		fMode = false;
 		dMode = false;
+		d2Mode = true;
 	}
 }
 //---------------------------------------------------------------------------
@@ -132,7 +137,8 @@ void __fastcall TForm1::DivClick(TObject *Sender)
 		EditDisplay->Text = EditDisplay->Text + '/';
 		lastChar = '/';
 		fMode = false;
-        dMode = false;
+		dMode = false;
+		d2Mode = true;
 	}
 }
 //---------------------------------------------------------------------------
@@ -144,6 +150,7 @@ void __fastcall TForm1::DotClick(TObject *Sender)
 		EditDisplay->Text = EditDisplay->Text + '.';
 		lastChar = '.';
 		dMode = false;
+		d2Mode = false;
 		fMode = false;
 	}
 }
@@ -185,7 +192,7 @@ void __fastcall TForm1::ClearClick(TObject *Sender)
 	lastChar = '0';
 	fMode = false;
 	dMode = false;
-	nMode = false;
+	d2Mode = true;
 }
 //---------------------------------------------------------------------------
 
@@ -287,6 +294,121 @@ void __fastcall TForm1::LogClick(TObject *Sender)
 		lastChar = '(';
 		dMode = false;
 		fMode = false;
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::BackClick(TObject *Sender)
+{
+	if(EditDisplay->Text.Length() == 1) {
+		EditDisplay->Text = "0";
+		lastChar = '0';
+		fMode = false;
+		dMode = false;
+		d2Mode = true;
+	}
+	else {
+		if(lastChar == '.') {
+			dMode = true;
+		}
+		if(lastChar == '(') {
+			pCount--;
+		}
+		if(lastChar == ')') {
+            pCount++;
+        }
+		EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+		lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+		if(lastChar == '+' || lastChar == '*' || lastChar == '/' || lastChar == '(') {
+			fMode = false;
+			dMode = false;
+			d2Mode = true;
+		}
+		else if(lastChar == '-') {
+			if(EditDisplay->Text.Length() == 1) {
+				EditDisplay->Text = "0";
+				lastChar = '0';
+				fMode = false;
+				dMode = false;
+				d2Mode = true;
+			}
+			else {
+				char nlChar = EditDisplay->Text[EditDisplay->Text.Length()-1];
+				if(nlChar == '+' || nlChar == '*' || nlChar == '/' || nlChar == '(' ||
+				   nlChar == '-') {
+					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+					lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+					fMode = false;
+					dMode = false;
+					d2Mode = true;
+				}
+			}
+		}
+		else if(lastChar == '.') {
+			fMode = false;
+			dMode = false;
+            d2Mode = false;
+		}
+		else if(lastChar == '^') {
+			EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+			lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+		}
+		else if(lastChar == 's' || lastChar == 't' || lastChar == 'g') {
+			if(EditDisplay->Text.Length() == 3) {
+				EditDisplay->Text = "0";
+				lastChar = '0';
+				fMode = false;
+				dMode = false;
+				d2Mode = true;
+			}
+			else {
+				EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+				EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+				EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+				lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+				fMode = false;
+				dMode = false;
+				d2Mode = true;
+			}
+		}
+		else if(lastChar == 'n') {
+			char nlChar = EditDisplay->Text[EditDisplay->Text.Length()-1];
+			if(nlChar == 'l') {
+				if(EditDisplay->Text.Length() == 2) {
+					EditDisplay->Text = "0";
+					lastChar = '0';
+					fMode = false;
+					dMode = false;
+					d2Mode = true;
+				}
+				else {
+					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+					lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+					fMode = false;
+					dMode = false;
+					d2Mode = true;
+				}
+			}
+			else {
+					if(EditDisplay->Text.Length() == 3) {
+					EditDisplay->Text = "0";
+					lastChar = '0';
+					fMode = false;
+					dMode = false;
+					d2Mode = true;
+				}
+				else {
+					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+					lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+					fMode = false;
+					dMode = false;
+					d2Mode = true;
+				}
+            }
+		}
 	}
 }
 //---------------------------------------------------------------------------

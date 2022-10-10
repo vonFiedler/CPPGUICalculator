@@ -56,6 +56,7 @@ object Form1: TForm1
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 2
+    OnClick = BackClick
   end
   object btnAns: TButton
     Left = 409
