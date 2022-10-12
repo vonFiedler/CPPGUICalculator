@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <exception>
 #include <stdexcept>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -26,6 +25,23 @@ bool d2Mode = true;
 bool nMode = false;
 
 string infix = "0";
+
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+
+
+/*
+*   Following code modified from:
+*	Author: Kenneth Perkins
+*   Date:   Jan 31, 2014
+*   Updated: Feb 5, 2021
+*   Taken From: http://programmingnotes.org/
+*   File: InToPostEval.cpp
+*/
 
 bool isMathOperator(char token) {
 // this function checks if operand is a math operator
@@ -154,47 +170,63 @@ string convertInfixToPostfix(string infix) {
 	return postfix;
 }// end of convertInfixToPostfix
 
-double calculate(char mathOperator, double value1, double value2) {
+pair<double, bool> calculate(char mathOperator, double value1, double value2) {
 // this function carries out the actual math process
-    double ans = 0;
+	double ans = 0;
+	int errCode = 0;
+	pair<double, bool> returner;
+	returner.first = 0; // answer
+	returner.second = false; // error code
 	switch (mathOperator) {
 		case '+':
-			ans = value1 + value2;
+			returner.first = value1 + value2;
 			break;
 		case '-':
-			ans = value1 - value2;
+			returner.first = value1 - value2;
             break;
 		case '*':
-			ans = value1 * value2;
+			returner.first = value1 * value2;
             break;
 		case '/':
-			ans = value1 / value2;
+			if(value2 == 0) {
+				returner.second = true;
+				return returner;
+			}
+			returner.first = value1 / value2;
 			break;
 		case '^':
-			ans = pow(value1, value2);
+			returner.first = pow(value1, value2);
 			break;
-			ans = cos(value1);
+			returner.first = cos(value1);
             break;
 		case 's':
-			ans = sin(value1);
+			returner.first = sin(value1);
             break;
 		case 't':
-			ans = tan(value1);
+			returner.first = tan(value1);
 			break;
 		case 'o':
-			ans = cos(value1) / sin(value1);
+			returner.first = cos(value1) / sin(value1);
 			break;
 		case 'l':
-			ans = log10(value1);
+			if(value1 <= 0) {
+				returner.second = true;
+				return returner;
+			}
+			returner.first = log10(value1);
 			break;
 		case 'n':
-			ans = log(value1);
+			if(value1 <= 0) {
+				returner.second = true;
+				return returner;
+			}
+			returner.first = log(value1);
 			break;
         default:
-            ans = 0;
-            break;
+			returner.first = 0;
+			break;
 	}
-    return ans;
+	return returner;
 }// end of calculate
 
 vector<string> split(const string& source, const string& delimiters) {
@@ -214,22 +246,17 @@ vector<string> split(const string& source, const string& delimiters) {
     return results;
 }// end of split
 
-double evaluatePostfix(const string& postfix) {
+pair<double, bool> evaluatePostfix(const string& postfix) {
 // this function evaluates a postfix expression
     // declare function variables
-	double answer = 0;
+	pair<double, int> result;
+	result.first = 0; // answer
+	result.second = 0; // error code
 	stack<double> doubleStack;
 
 	// split string into tokens to isolate multi digit, negative and decimal
 	// numbers, aswell as single digit numbers and math operators
 	auto tokens = split(postfix, " ");
-
-    // display the found tokens to the screen
-    //for (unsigned x = 0; x < tokens.size(); ++x) {
-    //    std::cout<< tokens.at(x) << std::endl;
-    //}
-
-	//std::cout << "\nCalculations:\n";
 
     // loop thru array until there is no more data
 	for (unsigned x = 0; x < tokens.size(); ++x) {
@@ -253,16 +280,24 @@ double evaluatePostfix(const string& postfix) {
 				value2 = 0;
 				value1 = doubleStack.top();
 				doubleStack.pop();
-                answer = calculate(mathOperator, value1, value2);
-				doubleStack.push(answer);
+				result = calculate(mathOperator, value1, value2);
+				if(result.second == true) {
+					result.first = 0;
+					return result;
+                }
+				doubleStack.push(result.first);
 
             } else if (doubleStack.size() > 1) {
                 value2 = doubleStack.top();
                 doubleStack.pop();
                 value1 = doubleStack.top();
                 doubleStack.pop();
-                answer = calculate(mathOperator, value1, value2);
-                doubleStack.push(answer);
+				result = calculate(mathOperator, value1, value2);
+				if(result.second == true) {
+					result.first = -1;
+					return result;
+                }
+				doubleStack.push(result.first);
             }
         } else {
             // this should never execute, & if it does, something went really wrong
@@ -271,52 +306,46 @@ double evaluatePostfix(const string& postfix) {
     }
     // pop the final answer from the stack, and return to main
     if (!doubleStack.empty()) {
-        answer = doubleStack.top();
-    }
-    return answer;
+		result.first = doubleStack.top();
+	}
+	return result;
 }// end of evaluatePostfix
 
-
-
-//---------------------------------------------------------------------------
-__fastcall TForm1::TForm1(TComponent* Owner)
-	: TForm(Owner)
-{
-}
-//---------------------------------------------------------------------------
-
-
+// end of Kenneth Perkin's code.
 
 
 void __fastcall TForm1::NumberClick(TObject *Sender)
 {
 	TButton* b = ((TButton*)Sender);
-	if(nMode == true) {
+	if(lastChar != ')') {
+		if(nMode == true) {
+			if(EditDisplay->Text == "0") {
+				EditDisplay->Text = '-';
+				infix = '~';
+			}
+			else {
+				EditDisplay->Text = EditDisplay->Text + '-';
+				infix = infix + '~';
+			}
+			nMode = false;
+		}
+
+		if(d2Mode == true) {
+			dMode = true;
+		}
+
 		if(EditDisplay->Text == "0") {
-			EditDisplay->Text = '-';
-			infix = '~';
+			EditDisplay->Text = b->Caption;
+			infix = char(EditDisplay->Text[1]);
 		}
 		else {
-			EditDisplay->Text = EditDisplay->Text + '-';
-			infix = infix + '~';
+			EditDisplay->Text = EditDisplay->Text + b->Caption;
+			infix = infix + char(EditDisplay->Text[EditDisplay->Text.Length()]);
 		}
-		nMode = false;
+		lastChar = b->Caption[1];
+		fMode = true;
 	}
 
-	if(d2Mode == true) {
-		dMode = true;
-    }
-
-	if(EditDisplay->Text == "0") {
-		EditDisplay->Text = b->Caption;
-		infix = char(EditDisplay->Text[1]);
-	}
-	else {
-		EditDisplay->Text = EditDisplay->Text + b->Caption;
-		infix = infix + char(EditDisplay->Text[EditDisplay->Text.Length()]);
-	}
-	lastChar = b->Caption[1];
-	fMode = true;
 }
 //---------------------------------------------------------------------------
 
@@ -725,13 +754,20 @@ void __fastcall TForm1::AnsClick(TObject *Sender)
 		AnswerDisplay->Text = "Please Finish Equation";
         return;
 	}
-	//wchar_t* infix0 = EditDisplay->Text.c_str();
-	//wstring ws(infix0);
-	//string str(ws.begin(), ws.end());
-	//string postfix = convert(str);
 	string postfix = convertInfixToPostfix(infix);
-	double answer = evaluatePostfix(postfix);
-	AnswerDisplay->Text = answer;
+	pair<double, bool> result = evaluatePostfix(postfix);
+	if(result.second == true) {
+		if(result.first == 0) {
+			AnswerDisplay->Text = "Logarithm Domain Error";
+		}
+		else {
+			AnswerDisplay->Text = "Cannot Divide by 0";
+		}
+	}
+	else {
+		AnswerDisplay->Text = result.first;
+	}
+
 }
 //---------------------------------------------------------------------------
 
