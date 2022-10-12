@@ -32,11 +32,11 @@ object Form1: TForm1
     Left = 8
     Top = 51
     Width = 476
-    Height = 66
+    Height = 53
     Alignment = taRightJustify
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -48
+    Font.Height = -37
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
@@ -71,6 +71,7 @@ object Form1: TForm1
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 3
+    OnClick = AnsClick
   end
   object Button9: TButton
     Left = 328
