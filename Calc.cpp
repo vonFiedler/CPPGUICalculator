@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <exception>
 #include <stdexcept>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -32,7 +33,6 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 {
 }
 //---------------------------------------------------------------------------
-
 
 /*
 *   Following code modified from:
@@ -78,7 +78,7 @@ string replaceAll(const string& source
 int orderOfOperations(char token) {
 // this function returns the priority of each math operator
 	int priority = 0;
-	switch (std::tolower(token)) {
+	switch (token) {
 		case 'c': case 's': case 't': case 'o': case 'l': case 'n':
             priority = 5;
 			break;
@@ -117,6 +117,7 @@ bool isNumeric(string value) {
 string convertInfixToPostfix(string infix) {
 	string postfix;
 	stack<char> charStack;
+
     // loop thru array until there is no more data
 	for (unsigned x = 0; x < infix.length(); ++x) {
         // place numbers (standard, decimal, & negative)
@@ -153,17 +154,48 @@ string convertInfixToPostfix(string infix) {
             // push the remaining math operator onto the stack
             charStack.push(infix[x]);
 		}
+		// push outer parentheses onto stack
+        else if (infix[x] == '(') {
+            charStack.push(infix[x]);
+
+        } else if (infix[x] == ')') {
+            // pop the current math operator from the stack
+            while ((!charStack.empty()) && (charStack.top() != '(')) {
+                if (postfix.length() > 0 && !std::isspace(postfix.back())) {
+                    postfix += " ";
+                }
+                // place the math operator onto the postfix string
+                postfix += charStack.top();
+                // pop the next operator from the stack and
+                // continue the process until complete
+                charStack.pop();
+            }
+
+            // pop '(' symbol off the stack
+            if (!charStack.empty()) {
+                charStack.pop();
+            } else {
+                // no matching '('
+                throw std::invalid_argument{ "PARENTHESES MISMATCH" };
+            }
+        } else {
+            throw std::invalid_argument{ "INVALID INPUT" };
+		}
 	}
 
 	// place any remaining math operators from the stack onto
     // the postfix array
 	while (!charStack.empty()) {
+		if (charStack.top() == '(' || charStack.top() == ')') {
+            throw std::invalid_argument{ "PARENTHESES MISMATCH" };
+		}
         if (postfix.length() > 0 && !std::isspace(postfix.back())) {
             postfix += " ";
         }
         postfix += charStack.top();
         charStack.pop();
 	}
+
 	// replace all '~' symbols with a minus sign
 	postfix = replaceAll(postfix, "~", "-");
 
@@ -197,8 +229,9 @@ pair<double, bool> calculate(char mathOperator, double value1, double value2) {
 		case '^':
 			returner.first = pow(value1, value2);
 			break;
+		case 'c':
 			returner.first = cos(value1);
-            break;
+			break;
 		case 's':
 			returner.first = sin(value1);
             break;
@@ -496,7 +529,8 @@ void __fastcall TForm1::ClearClick(TObject *Sender)
 	fMode = false;
 	dMode = false;
 	d2Mode = true;
-    pCount = 0;
+	pCount = 0;
+	AnswerDisplay->Text = "0";
 }
 //---------------------------------------------------------------------------
 
@@ -627,14 +661,21 @@ void __fastcall TForm1::BackClick(TObject *Sender)
 	else {
 		if(lastChar == '.') {
 			dMode = true;
+			fMode = true;
 		}
 		if(lastChar == '(') {
 			pCount--;
+
 		}
 		if(lastChar == ')') {
-            pCount++;
+			pCount++;
+		}
+		if(lastChar == '+' || lastChar == '*' || lastChar == '/' || lastChar == '-') {
+			fMode = true;
+
         }
 		EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
+		infix.pop_back();
 		lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
 		if(lastChar == '+' || lastChar == '*' || lastChar == '/' || lastChar == '(') {
 			fMode = false;
@@ -672,6 +713,7 @@ void __fastcall TForm1::BackClick(TObject *Sender)
 			EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 			infix.pop_back();
 			lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
+			fMode = true;
 		}
 		else if(lastChar == 's' || lastChar == 't' || lastChar == 'g') {
 			if(EditDisplay->Text.Length() == 3) {
@@ -686,8 +728,6 @@ void __fastcall TForm1::BackClick(TObject *Sender)
 				EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 				EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 				EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
-				infix.pop_back();
-				infix.pop_back();
 				infix.pop_back();
 				lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
 				fMode = false;
@@ -710,7 +750,6 @@ void __fastcall TForm1::BackClick(TObject *Sender)
 					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 					infix.pop_back();
-					infix.pop_back();
 					lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
 					fMode = false;
 					dMode = false;
@@ -731,8 +770,6 @@ void __fastcall TForm1::BackClick(TObject *Sender)
 					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 					EditDisplay->Text = EditDisplay->Text.Delete(EditDisplay->Text.Length(),1);
 					infix.pop_back();
-					infix.pop_back();
-                    infix.pop_back();
 					lastChar = EditDisplay->Text[EditDisplay->Text.Length()];
 					fMode = false;
 					dMode = false;
@@ -740,7 +777,21 @@ void __fastcall TForm1::BackClick(TObject *Sender)
 				}
             }
 		}
+		if(EditDisplay->Text.Length() > 1){
+			int i = EditDisplay->Text.Length();
+			while(isNumeric(EditDisplay->Text[i])){
+				if(EditDisplay->Text[i] == '.'){
+					dMode = false;
+					d2Mode = false;
+					break;
+				}
+				i--;
+
+			}
+		}
+
 	}
+	AnswerDisplay->Text = infix.c_str();
 }
 //---------------------------------------------------------------------------
 
@@ -755,6 +806,7 @@ void __fastcall TForm1::AnsClick(TObject *Sender)
         return;
 	}
 	string postfix = convertInfixToPostfix(infix);
+	AnswerDisplay->Text = postfix.c_str();
 	pair<double, bool> result = evaluatePostfix(postfix);
 	if(result.second == true) {
 		if(result.first == 0) {
